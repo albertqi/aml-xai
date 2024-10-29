@@ -5,10 +5,13 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from common import DATA_DIR
+from sklearn.preprocessing import OneHotEncoder
 
 
-def main():
+DATA_DIR = "data"
+
+
+def preprocess():
     # Read the data from the CSV file.
     df = pd.read_csv(f"{DATA_DIR}/baf.csv")
 
@@ -33,8 +36,8 @@ def main():
     # Display the correlation matrix of the data.
     # We see a high negative correlation between 'velocity_4w' and 'month'. This is because 'velocity_4w' is calculated based on the month.
     # We can thus remove 'velocity_4w' from our dataset.
-    numerical_columns = df.select_dtypes(include=["int64", "float64"]).columns
-    corr_matrix = df[numerical_columns].corr()
+    numer_cols = df.select_dtypes(include=["int64", "float64"]).columns
+    corr_matrix = df[numer_cols].corr()
     plt.figure(figsize=(12, 8))
     sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", vmin=-1, vmax=1)
     plt.title("Correlation Matrix of Numerical Features")
@@ -49,6 +52,20 @@ def main():
     plt.title("Distribution of Target Variable")
     plt.show()
 
+    # Perform one-hot encoding on categorical columns.
+    categ_cols = df.select_dtypes(include="object").columns
+    encoder = OneHotEncoder(sparse_output=False)
+    one_hot_encoded = encoder.fit_transform(df[categ_cols])
+    one_hot_df = pd.DataFrame(
+        one_hot_encoded,
+        columns=encoder.get_feature_names_out(categ_cols),
+    )
+    df.drop(columns=categ_cols, axis=1, inplace=True)
+    df = pd.concat([df, one_hot_df], axis=1, copy=False)
+
+    # Return the preprocessed data.
+    return df
+
 
 if __name__ == "__main__":
-    main()
+    preprocess()

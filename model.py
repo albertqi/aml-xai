@@ -3,30 +3,17 @@
 
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import xgboost as xgb
-from common import DATA_DIR
+from eda import preprocess
 from sklearn.metrics import roc_auc_score, roc_curve
-from sklearn.preprocessing import OneHotEncoder
 
 
 TARGET_FPR = 0.05
 
 
-def main():
-    # Read the data from the CSV file.
-    df = pd.read_csv(f"{DATA_DIR}/baf.csv")
-
-    # Perform one-hot encoding on categorical columns.
-    categ_cols = df.select_dtypes(include="object").columns
-    encoder = OneHotEncoder(sparse_output=False)
-    one_hot_encoded = encoder.fit_transform(df[categ_cols])
-    one_hot_df = pd.DataFrame(
-        one_hot_encoded,
-        columns=encoder.get_feature_names_out(categ_cols),
-    )
-    df.drop(columns=categ_cols, axis=1, inplace=True)
-    df = pd.concat([df, one_hot_df], axis=1, copy=False)
+def train():
+    # Preprocess the data.
+    df = preprocess()
 
     # Split data into features and target.
     X = df.drop(columns=["fraud_bool"], axis=1)
@@ -59,6 +46,9 @@ def main():
     plt.title("ROC Curve")
     plt.show()
 
+    # Return the training data and model.
+    return X_train, model
+
 
 if __name__ == "__main__":
-    main()
+    train()
