@@ -3,9 +3,11 @@
 
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import xgboost as xgb
 from eda import preprocess
 from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.preprocessing import StandardScaler
 
 
 TARGET_FPR = 0.05
@@ -22,6 +24,11 @@ def train():
     # Split data into training and testing sets.
     X_train, X_test = X[X["month"] < 6], X[X["month"] >= 6]
     y_train, y_test = y[X["month"] < 6], y[X["month"] >= 6]
+
+    # Standardize the features.
+    scaler = StandardScaler()
+    X_train = pd.DataFrame(scaler.fit_transform(X_train), columns=X_train.columns)
+    X_test = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
 
     # Train the model.
     model = xgb.XGBClassifier()
