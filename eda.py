@@ -31,7 +31,15 @@ def preprocess():
     # We also see that some columns have missing values, such as 'session_length_in_minutes', as it contains -1 values.
     # Display the number of -1 values in each column.
     # The main issues here are 'prev_address_months_count' and 'bank_months_count', which have a significant number of missing values.
+    # Since prev_address_months_count is missing 70% of the time, we can remove it from our dataset.
+    # We will impute 'bank_months_count' with the median value since it's missing only 25% of the time. 
+    # We will also impute any other missing values with the median value.
     print(df.isin([-1]).sum())
+    df.drop(columns=["prev_address_months_count"], inplace=True)
+    df["bank_months_count"].replace(-1, df["bank_months_count"].median(), inplace=True)
+    df["current_address_months_count"].replace(-1, df["current_address_months_count"].median(), inplace=True)
+    df["session_length_in_minutes"].replace(-1, df["session_length_in_minutes"].median(), inplace=True)
+    df["device_distince_emails_8w"].replace(-1, df["device_distince_emails_8w"].median(), inplace=True)  
 
     # Display the correlation matrix of the data.
     # We see a high negative correlation between 'velocity_4w' and 'month'. This is because 'velocity_4w' is calculated based on the month.
