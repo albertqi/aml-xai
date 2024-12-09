@@ -53,8 +53,8 @@ def train():
     plt.title("ROC Curve")
     plt.show()
 
-    # Return the training data and model.
-    return X_train, model
+    # Return the testing data and model.
+    return X_test, model
 
 
 if __name__ == "__main__":
