@@ -7,6 +7,7 @@ import pandas as pd
 from explain import explain
 from scipy.stats import entropy
 from sklearn.metrics import mean_squared_error
+from tqdm import tqdm
 
 
 def calculate_metrics():
@@ -39,7 +40,7 @@ def calculate_metrics():
         """Calculate the local stability of the explainer `E` on the instance `x`."""
 
         # Generate perturbations around x.
-        E_x = E([x]).values[0]
+        E_x = E(pd.DataFrame([x])).values[0]
         perturbations = sample_points_l2_ball(x, r, num_samples)
         E_perturbations = E(perturbations).values
         assert len(perturbations) == len(E_perturbations)
@@ -78,10 +79,21 @@ def calculate_metrics():
             group_losses[group] = loss_based_fidelity(E, f, X_group)
         return group_losses
 
+    def smoothed_shap(X, n_samples=10):
+        """Calculate the smoothed SHAP values for the dataset `X` using `n_samples` samples."""
+        shap_values = []
+        for _ in tqdm(range(n_samples)):
+            vals = explainer(X + np.random.normal(0, 0.01, X.shape)).values
+            shap_values.append(vals)
+        obj = lambda: None
+        setattr(obj, "values", np.mean(shap_values, axis=0))
+        return obj
+
     # Calculate the metrics.
-    print("Loss-Based Fidelity:", loss_based_fidelity(explainer, model))
-    print("Local Stability:", local_stability(explainer, X_test.iloc[21]))
-    print("Entropy-Complexity:", entropy_complexity(explainer))
+    print("Loss-Based Fidelity:", loss_based_fidelity(smoothed_shap, model))
+    print("Local Stability:", local_stability(smoothed_shap, X_test.iloc[0]))
+    print("Local Stability:", local_stability(smoothed_shap, X_test.iloc[21]))
+    print("Entropy-Complexity:", entropy_complexity(smoothed_shap))
 
     X_test["income_quartile"] = pd.cut(X_test["income"], bins=4, labels=False)
     groups = X_test.groupby("income_quartile").groups
@@ -89,7 +101,7 @@ def calculate_metrics():
 
     print(
         "Faithfulness Loss Per Income Group:",
-        faithfulness_loss_per_group(explainer, model, groups),
+        faithfulness_loss_per_group(smoothed_shap, model, groups),
     )
 
     X_test["customer_age_quartile"] = pd.cut(
@@ -100,7 +112,7 @@ def calculate_metrics():
 
     print(
         "Faithfulness Loss Per Customer Age Group:",
-        faithfulness_loss_per_group(explainer, model, groups),
+        faithfulness_loss_per_group(smoothed_shap, model, groups),
     )
 
     housing_status_cols = [
@@ -112,7 +124,7 @@ def calculate_metrics():
 
     print(
         "Faithfulness Loss Per Housing Status Group:",
-        faithfulness_loss_per_group(explainer, model, groups),
+        faithfulness_loss_per_group(smoothed_shap, model, groups),
     )
 
 

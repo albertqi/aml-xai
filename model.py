@@ -31,7 +31,7 @@ def train():
     X_test = pd.DataFrame(scaler.transform(X_test), columns=X_test.columns)
 
     # Train the model.
-    model = xgb.XGBClassifier()
+    model = xgb.XGBClassifier(reg_alpha=1, reg_lambda=1, learning_rate=0.01)
     model.fit(X_train, y_train)
 
     # Evaluate the model.
