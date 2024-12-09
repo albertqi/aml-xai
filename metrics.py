@@ -103,6 +103,18 @@ def calculate_metrics():
         faithfulness_loss_per_group(explainer, model, groups),
     )
 
+    housing_status_cols = [
+        "housing_status_" + x for x in ("BA", "BB", "BC", "BD", "BE", "BF", "BG")
+    ]
+    X_test["housing_status"] = np.argmax(X_test[housing_status_cols].values, axis=1)
+    groups = X_test.groupby("housing_status").groups
+    X_test.drop(columns=["housing_status"], inplace=True)
+
+    print(
+        "Faithfulness Loss Per Housing Status Group:",
+        faithfulness_loss_per_group(explainer, model, groups),
+    )
+
 
 if __name__ == "__main__":
     calculate_metrics()
